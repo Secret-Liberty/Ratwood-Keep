@@ -92,9 +92,12 @@
 #define TRAIT_ROTTOUCHED "Rot Touched"
 #define TRAIT_NUDE_SLEEPER "Nude Sleeper"
 #define TRAIT_WANTED "Wanted Brigand"
+#define TRAIT_WANTED_POSTER_READ "Read Wanted Poster"
 #define TRAIT_COMMIE "Eye of a Brigand" //bandit trait
 #define TRAIT_DEATHBYSNUSNU "Bed Breaker" // double sex damage (requires strong intent)
 #define TRAIT_POISONBITE "Venomous Bite" // Adds tox damage on bites
+#define TRAIT_RITUALIST "Ritualist" // Allows use of ritual feathers
+#define TRAIT_DEATHBARGAIN "Death Bargain" // Used by UNDERMAIDEN'S BARGAIN
 
 // PATRON CURSE TRAITS
 #define TRAIT_CURSE "Curse" //source
@@ -184,6 +187,8 @@ GLOBAL_LIST_INIT(roguetraits, list(
 	TRAIT_POISONBITE = "My bites inject venom into my target.", // Ham change
 	TRAIT_WANTED = span_info("You are wanted in this kingdom, if someone sees your face they might run away or attack you."),
 	TRAIT_EXCOMMUNICATED = span_info("The Ten are not on my side any longer..."),
+	TRAIT_RITUALIST = span_info("I am skilled in the holy arts. Using a ritual feather, I can more deftly channel my God's powers via runes."),
+	TRAIT_DEATHBARGAIN = span_info("A horrible deal has been prepared in your name. May you never see it fulfilled..."),
 ))
 
 // trait accessor defines
@@ -371,6 +376,7 @@ Remember to update _globalvars/traits.dm if you're adding/removing/renaming trai
 #define GLASSES_TRAIT "glasses"
 #define VEHICLE_TRAIT "vehicle" // inherited from riding vehicles
 #define INNATE_TRAIT "innate"
+#define DEADITE_TRAIT "deadite"
 
 // unique trait sources, still defines
 #define TRAIT_BOG_TREKKING "trekking"
