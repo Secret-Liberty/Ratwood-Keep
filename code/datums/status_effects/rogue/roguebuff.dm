@@ -687,6 +687,11 @@
 	owner.adjustOrganLoss(ORGAN_SLOT_BRAIN, -healing_on_tick)
 	owner.adjustCloneLoss(-healing_on_tick, 0)
 
+	// Fix for simplemob slow after healing
+	if(istype(owner, /mob/living/simple_animal))
+		var/mob/living/simple_animal/S = owner
+		S.updatehealth()
+
 /datum/status_effect/buff/vitae
 	id = "druqks"
 	alert_type = /atom/movable/screen/alert/status_effect/buff/vitae
@@ -923,3 +928,4 @@
 /datum/status_effect/buff/calmed/on_remove()
 	. = ..()
 	to_chat(owner, span_warning("My mind is my own again, no longer awash with foggy peace!"))
+

@@ -201,7 +201,7 @@
 			var/obj/item/I
 			if(sublimb_grabbed == BODY_ZONE_PRECISE_L_HAND && M.active_hand_index == 1)
 				I = M.get_active_held_item()
-			else 
+			else
 				if(sublimb_grabbed == BODY_ZONE_PRECISE_R_HAND && M.active_hand_index == 2)
 					I = M.get_active_held_item()
 				else
@@ -305,7 +305,7 @@
 		if(QDELETED(I) || QDELETED(L) || !L.remove_embedded_object(I))
 			return FALSE
 		L.receive_damage(I.embedding.embedded_unsafe_removal_pain_multiplier*I.w_class) //It hurts to rip it out, get surgery you dingus.
-		user.dropItemToGround(src)
+		user.dropItemToGround(src) // this will unset vars like limb_grabbed
 		user.put_in_hands(I)
 		C.emote("paincrit", TRUE)
 		playsound(C, 'sound/foley/flesh_rem.ogg', 100, TRUE, -2)
@@ -313,13 +313,12 @@
 			user.visible_message(span_notice("[user] rips [I] out of [user.p_their()] [L.name]!"), span_notice("I rip [I] from my [L.name]."))
 		else
 			user.visible_message(span_notice("[user] rips [I] out of [C]'s [L.name]!"), span_notice("I rip [I] from [C]'s [L.name]."))
-		sublimb_grabbed = limb_grabbed.body_zone
 	else if(HAS_TRAIT(M, TRAIT_SIMPLE_WOUNDS))
 		var/obj/item/I = locate(sublimb_grabbed) in M.simple_embedded_objects
 		if(QDELETED(I) || !M.simple_remove_embedded_object(I))
 			return FALSE
 		M.apply_damage(I.embedding.embedded_unsafe_removal_pain_multiplier*I.w_class, BRUTE) //It hurts to rip it out, get surgery you dingus.
-		user.dropItemToGround(src)
+		user.dropItemToGround(src) // this will unset vars like limb_grabbed
 		user.put_in_hands(I)
 		M.emote("paincrit", TRUE)
 		playsound(M, 'sound/foley/flesh_rem.ogg', 100, TRUE, -2)
@@ -327,7 +326,6 @@
 			user.visible_message(span_notice("[user] rips [I] out of [user.p_them()]self!"), span_notice("I rip [I] out of myself."))
 		else
 			user.visible_message(span_notice("[user] rips [I] out of [M]!"), span_notice("I rip [I] out of [src]."))
-		sublimb_grabbed = M.simple_limb_hit(user.zone_selected)
 	user.update_grab_intents(grabbed)
 	return TRUE
 
@@ -458,6 +456,7 @@
 	slot_flags = ITEM_SLOT_MOUTH
 	bleed_suppressing = 1
 	var/last_drink
+	var/memorylost = FALSE
 
 /obj/item/grabbing/bite/Click(location, control, params)
 	var/list/modifiers = params2list(params)
@@ -501,7 +500,6 @@
 					user.werewolf_feed(C)
 			var/datum/antagonist/zombie/zombie_antag = user.mind.has_antag_datum(/datum/antagonist/zombie)
 			if(zombie_antag || istype(user, /mob/living/carbon/human/species/deadite))
-				user.mob_timers["deadite_bite"] = world.time
 				var/datum/antagonist/zombie/existing_zomble = C.mind?.has_antag_datum(/datum/antagonist/zombie)
 				if(caused_wound?.zombie_infect_attempt() && !existing_zomble)
 					user.mind.adjust_triumphs(1)
@@ -532,6 +530,10 @@
 		to_chat(user, span_warning("Sigh. It's not bleeding."))
 		return
 	var/mob/living/carbon/C = grabbed
+	if(istype(C, /mob/living/carbon/human/species/goblin)|| istype(C, /mob/living/carbon/human/species/goblinp))
+		to_chat(user, span_warning("You recoil at the foul taste of graggar corrupted blood."))
+		addtimer(CALLBACK(user, TYPE_PROC_REF(/mob/living/carbon, vomit), 0, TRUE), rand(8 SECONDS, 15 SECONDS))
+		return
 	if(C.dna?.species && (NOBLOOD in C.dna.species.species_traits))
 		to_chat(user, span_warning("Sigh. No blood."))
 		return
@@ -563,6 +565,9 @@
 				else if (C.vitae_bank > 500)
 					C.blood_volume = max(C.blood_volume-45, 0)
 					C.vitae_bank -= 500
+					if(!memorylost)	//has the person already gotten the memory loss callback?
+						addtimer(CALLBACK(src, /obj/item/grabbing/bite/proc/apply_memory_loss, C, VDrinker), 15 SECONDS)
+						memorylost = TRUE	//memory loss callback applied, skip applying on next drink
 					if(ishuman(C))
 						var/mob/living/carbon/human/H = C
 						if(H.virginity)
@@ -624,3 +629,11 @@
 							VDrinker.handle_vitae(0) // Updates pool max.
 					if("No")
 						to_chat(user, span_warning("I decide [C] is unworthy."))
+
+
+/obj/item/grabbing/bite/proc/apply_memory_loss(mob/living/target, mob/living/user)
+	to_chat(target, span_notice("You feel... something slipping away. You can't remember who bit you!"))
+	target.visible_message(span_notice("[target] looks rather confused!"))
+	target.drowsyness = min(target.drowsyness + 50, 150)
+	log_game("[key_name(target)] has lost memory due to [key_name(user)]'s vampiric bite.")
+	memorylost = FALSE	//after this proc is ran, it can be ran again
